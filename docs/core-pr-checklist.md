@@ -9,7 +9,7 @@ reference each other, so a half-finished sequence is worse than not starting.
 | Blocker | Who | Why it blocks |
 |---|---|---|
 | GitHub organisation `ecosmart-nz` exists, with `ecosmart-homeassistant` public | Daryn | The issue-tracker and release URLs in this repo point at it |
-| Personal GitHub handle decided, `@REPLACE-ME-HANDLE` swapped everywhere | Daryn | `codeowners` must be a real account; hassfest checks the shape, reviewers check the person |
+| ~~Personal GitHub handle decided, placeholder swapped everywhere~~ **DONE** — the codeowner is `@Daryn-L` | Daryn | `codeowners` must be a real account; hassfest checks the shape, reviewers check the person |
 | `aioecosmart` 0.1.0 published to PyPI | Daryn (release → Trusted Publishing) | Core CI installs `requirements`; an unpublished library fails every job |
 | Home Assistant CLA signed | Daryn | The core PR is blocked by a bot until it is |
 | Beta evidence collected | Daryn | The PR body cites real users; see the draft below |
@@ -17,9 +17,12 @@ reference each other, so a half-finished sequence is worse than not starting.
 Only one new-integration PR per author may be open at a time. Do not queue the follow-up
 PRs (windows/TOU sensors, reauth, binary sensors, diagnostics) behind this one.
 
-## 1. Swap the codeowner handle
+## 1. Swap the codeowner handle — **DONE (25 Aug 2026): the codeowner is `@Daryn-L`**
 
-`@REPLACE-ME-HANDLE` appears in **three places in the core checkout**:
+Kept here because the same three-places-plus-one rule applies to any future handle change
+(a transfer to an org account, or adding a second codeowner).
+
+The handle appears in **three places in the core checkout**:
 
 1. `homeassistant/components/ecosmart/manifest.json` — the `codeowners` array
 2. `CODEOWNERS` — the `/homeassistant/components/ecosmart/` line
@@ -32,11 +35,14 @@ editing the two lines by hand:
 python -m script.hassfest
 ```
 
-Re-run hassfest after the swap and confirm it reports 0 invalid — that is the check that
-the two `CODEOWNERS` lines actually picked the new handle up.
+Re-run hassfest after any swap and confirm it reports 0 invalid — that is the check that
+the two `CODEOWNERS` lines actually picked the new handle up. On the 25 Aug swap it
+reported 1486 integrations, 0 invalid, and regenerated both lines to `@Daryn-L`.
 
 It also appears in this repo, in `docs/ecosmart.markdown` (`ha_codeowners`), which is the
-working copy of the docs page. Swap it there too, in the same sitting.
+working copy of the docs page — swap it there in the same sitting — and in the synced
+`custom_components/ecosmart/manifest.json`, which is not hand-edited: re-run
+`scripts/sync-from-core.sh 0.1.0` and it picks the new handle up from core.
 
 ## 2. Pre-flight gates
 

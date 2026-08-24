@@ -12,7 +12,7 @@ ha_platforms:
 ha_integration_type: service
 ha_quality_scale: bronze
 ha_codeowners:
-  - '@REPLACE-ME-HANDLE'
+  - '@Daryn-L'
 ---
 
 [Ecosmart](https://www.ecosmart.co.nz/) is a **New Zealand electricity retailer** that
