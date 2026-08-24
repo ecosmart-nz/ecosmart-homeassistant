@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Release bundles built for the beta channel.
+/dist/
+*.zip
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
