@@ -64,10 +64,13 @@ You need:
   something else, this integration stops working until you delete and re-add it with the
   new key. (A proper re-authentication prompt is the next thing on the list.)
 
-- A **recent Home Assistant**. This code is written against the current core
-  development branch and uses Python 3.14 syntax, so it needs a Home Assistant release
-  built on Python 3.14 or newer. If your Home Assistant is older, it will refuse to load
-  the component with a syntax error in the log rather than misbehave quietly.
+- A **recent Home Assistant**. This is the code submitted to Home Assistant core, written
+  against the current development branch, and it uses modern helper APIs —
+  `ConfigEntry.runtime_data`, `AddConfigEntryEntitiesCallback`, translated coordinator
+  errors — along with Python 3.12+ syntax. The exact oldest release it works on has not
+  been pinned down yet; the beta will establish it. If your Home Assistant is too old it
+  will refuse to load the component and say so in the log, rather than misbehave quietly.
+  If you hit that, please open an issue with your version — that is useful information.
 
 Nobody at Ecosmart will ever send you a key or ask you for one. You mint it, you hold it.
 
