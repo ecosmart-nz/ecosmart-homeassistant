@@ -1,184 +1,300 @@
-# Submitting `ecosmart` to Home Assistant core
+# Submitting `ecosmart` to Home Assistant core — runbook
 
-Everything needed to open the three pull requests, in the order they have to happen.
-Read it start to finish before opening anything: the three PRs go up **the same day** and
-reference each other, so a half-finished sequence is worse than not starting.
+Three pull requests go up **the same day** and cross-reference each other, so read this
+start to finish before opening anything. Everything a machine could prepare is prepared:
+all three branches exist, are committed, and have a `fork` remote wired. What is left is
+push, open, tick, sign.
 
-## 0. Before the day
+Prepared 25 August 2026. Branch state at that date:
 
-| Blocker | Who | Why it blocks |
-|---|---|---|
-| GitHub organisation `ecosmart-nz` exists, with `ecosmart-homeassistant` public | Daryn | The issue-tracker and release URLs in this repo point at it |
-| ~~Personal GitHub handle decided, placeholder swapped everywhere~~ **DONE** — the codeowner is `@Daryn-L` | Daryn | `codeowners` must be a real account; hassfest checks the shape, reviewers check the person |
-| `aioecosmart` 0.1.0 published to PyPI | Daryn (release → Trusted Publishing) | Core CI installs `requirements`; an unpublished library fails every job |
-| Home Assistant CLA signed | Daryn | The core PR is blocked by a bot until it is |
-| Beta evidence collected | Daryn | The PR body cites real users; see the draft below |
+| Repo | Local checkout | Branch | Commit | Based on |
+|---|---|---|---|---|
+| core | `/root/src/ha-core` (WSL `Ubuntu-24.04`, user `root`) | `ecosmart-integration` | `3cdd11bc40` | `dev` |
+| brands | `C:\synergy\homeassistant\submission\brands` | `add-ecosmart` | `a3c9860f` | `master` @ `012785e2` |
+| docs | `C:\synergy\homeassistant\submission\home-assistant.io` | `add-ecosmart-docs` | `eb989bf` | `next` @ `6260832` |
 
-Only one new-integration PR per author may be open at a time. Do not queue the follow-up
-PRs (windows/TOU sensors, reauth, binary sensors, diagnostics) behind this one.
+The three forks (`Daryn-L/core`, `Daryn-L/brands`, `Daryn-L/home-assistant.io`) exist. The
+`fork` remote is already added to each checkout; nothing has been pushed to any of them.
 
-## 1. Swap the codeowner handle — **DONE (25 Aug 2026): the codeowner is `@Daryn-L`**
+---
 
-Kept here because the same three-places-plus-one rule applies to any future handle change
-(a transfer to an org account, or adding a second codeowner).
+## 1. Pre-flight gates — all green 25 August 2026
 
-The handle appears in **three places in the core checkout**:
-
-1. `homeassistant/components/ecosmart/manifest.json` — the `codeowners` array
-2. `CODEOWNERS` — the `/homeassistant/components/ecosmart/` line
-3. `CODEOWNERS` — the `/tests/components/ecosmart/` line
-
-`CODEOWNERS` is generated, so change the manifest first and then regenerate rather than
-editing the two lines by hand:
-
-```bash
-python -m script.hassfest
-```
-
-Re-run hassfest after any swap and confirm it reports 0 invalid — that is the check that
-the two `CODEOWNERS` lines actually picked the new handle up. On the 25 Aug swap it
-reported 1486 integrations, 0 invalid, and regenerated both lines to `@Daryn-L`.
-
-It also appears in this repo, in `docs/ecosmart.markdown` (`ha_codeowners`), which is the
-working copy of the docs page — swap it there in the same sitting — and in the synced
-`custom_components/ecosmart/manifest.json`, which is not hand-edited: re-run
-`scripts/sync-from-core.sh 0.1.0` and it picks the new handle up from core.
-
-## 2. Pre-flight gates
-
-All of these run in the WSL core checkout. Every command is foreground; none of them may
-be detached (WSL unmounts the distro when the attaching process exits).
+Nothing below needs re-running unless core `dev` has moved and the branch has been rebased.
+Every command runs in the WSL core checkout, in the foreground (WSL unmounts the distro if
+the attaching process exits):
 
 ```bash
 wsl -d Ubuntu-24.04 -u root --cd /root/src/ha-core -- bash -lc "source .venv/bin/activate; <command>"
 ```
 
-Run in this order:
-
-| # | Command | What it proves |
+| # | Command | Last result |
 |---|---|---|
-| 1 | `uv pip install /mnt/c/synergy/homeassistant/aioecosmart` | The library is importable. Drop this step once `aioecosmart` is on PyPI and `uv pip install "aioecosmart==0.1.0"` works instead. |
-| 2 | `python -m script.translations develop --integration ecosmart` | Regenerates `translations/en.json`. It is gitignored in core but the tests need it, and a fresh checkout will not have it. |
-| 3 | `python -m pytest tests/components/ecosmart --cov=homeassistant.components.ecosmart --cov-report=term-missing` | 25 tests + 4 snapshots pass, and coverage is 100 % on every file — config flow coverage at 100 % is a Bronze requirement, not a nicety. |
-| 4 | `python -m script.hassfest` | Manifest, strings, icons, quality scale and brands references all well-formed. Expect "0 invalid". |
-| 5 | `prek run --all-files` | Core's lint. It is `prek`, not `pre-commit` — pre-commit is gone from core. |
-| 6 | `python -m script.gen_requirements_all` | `requirements_all.txt` picks up `aioecosmart==0.1.0`. Commit whatever it changes. |
+| 1 | `uv pip install "aioecosmart==0.1.0"` | Installed **from PyPI**, not from the local path (`direct_url: none`). The published wheel is what the tests import. |
+| 2 | `python -m script.translations develop --integration ecosmart` | `translations/en.json` present. Core gitignores it, the tests need it, a fresh checkout will not have it. |
+| 3 | `python -m pytest tests/components/ecosmart -q` | **25 passed, 4 snapshots**, 1.2 s, 0 failures. |
+| 4 | `python -m script.hassfest` | **1486 integrations, 0 invalid.** |
+| 5 | `prek run --all-files` | Clean. It is `prek`, not `pre-commit` — pre-commit is gone from core. |
+| 6 | `python -m script.gen_requirements_all` | `requirements_all.txt` carries `aioecosmart==0.1.0`. |
 
-Then confirm the branch is rebased on current `dev` and the diff contains **only**
-`homeassistant/components/ecosmart/`, `tests/components/ecosmart/`, `CODEOWNERS` and the
-generated requirements files.
+Also green on 25 August, in this repo: `python scripts/validate.py` (11 files, byte-identical
+to core apart from the three custom-component manifest keys) and `python scripts/test_validate.py`
+(1 control + 7 refusal cases).
 
-## 3. The three pull requests, same day
+Confirm before pushing that the core branch is rebased on current `dev` and the diff contains
+**only** `homeassistant/components/ecosmart/`, `tests/components/ecosmart/`, `CODEOWNERS` and
+the generated requirements files.
 
-Open them in this order, then go back and cross-link.
+---
 
-### PR 1 — `home-assistant/brands`
+## 2. Push the three branches
 
-Path `core_integrations/ecosmart/`, files from this repo's `brand/`:
+Nothing has been pushed. Run these in order; each one is a single command.
 
-- `icon.png` (256 × 256)
-- `icon@2x.png` (512 × 512)
-- `logo.png` (640 × 128)
+**Core** (from Windows PowerShell or Git Bash — the checkout lives inside WSL):
 
-Provenance and the one open dimension question are in `brand/README.md`. Title:
-`Add Ecosmart brand images`. Body: one line saying it accompanies the core PR, with the
-link added once PR 3 exists.
+```bash
+wsl -d Ubuntu-24.04 -u root --cd /root/src/ha-core -- bash -lc "git push -u fork ecosmart-integration"
+```
 
-### PR 2 — `home-assistant/home-assistant.io`
+**Brands:**
 
-File `source/_integrations/ecosmart.markdown`, from this repo's `docs/ecosmart.markdown`.
-Target the **next** branch, not `current` — docs for an unreleased integration go to
-`next`. Leave `ha_release: "XXXX.XX"` as the placeholder; the release manager fills it.
-Title: `Add Ecosmart integration`.
+```bash
+git -C /c/synergy/homeassistant/submission/brands push -u fork add-ecosmart
+```
 
-### PR 3 — `home-assistant/core`
+**Docs:**
 
-Branch `ecosmart-integration`. Title: `Add Ecosmart integration`. Use the
-new-integration template and the draft below.
+```bash
+git -C /c/synergy/homeassistant/submission/home-assistant.io push -u fork add-ecosmart-docs
+```
 
-Once all three are open, edit each body to link the other two.
+> The brands and docs checkouts are **shallow** (`--depth 1`, later deepened a little). A
+> shallow push normally succeeds against a GitHub fork because the fork shares its object
+> store with upstream. If either push is rejected with `shallow update not allowed`, run
+> `git fetch --unshallow origin` in that checkout and push again. The core checkout is
+> blobless, not shallow, so it has no such problem.
 
-## 4. Core PR description — draft
+---
 
-> ## Proposed change
->
-> Adds a new integration for **Ecosmart**, a New Zealand electricity retailer that passes
-> the half-hourly wholesale (spot) price of electricity through to its customers. The
-> integration exposes that price and the published forward curve, so New Zealand users
-> can shift consumption — hot water, EV charging, home batteries — into the cheap half
-> hours.
->
-> It is deliberately a minimum first integration: **one platform (sensor), two entities
-> per connection point, no services, no diagnostics, no options flow.** Follow-ups are
-> planned and will be small.
->
-> - **Spot price** — the current wholesale price in c/kWh including GST, polled every
->   5 minutes. Unavailable when the published price is stale or has no value: a price
->   more than about fifteen minutes old must never be what tells a battery to charge.
-> - **Forecast price** — the forecast for the half hour in progress, polled every
->   30 minutes, with the whole published curve as an unrecorded attribute.
->
-> One service device per ICP (the fifteen-character identifier of a New Zealand
-> electricity connection). Two coordinators fetch per distinct grid exit point rather
-> than per ICP, so several connections behind the same substation share one request —
-> roughly 14 requests an hour per grid exit point against a 60-per-minute key limit.
->
-> **Library:** all protocol code lives in
-> [`aioecosmart`](https://github.com/ecosmart-nz/aioecosmart) (MIT, on PyPI, 100 % test
-> coverage, ruff + mypy --strict, published by GitHub Trusted Publishing). This PR pins
-> `aioecosmart==0.1.0`.
->
-> **Quality scale:** `bronze`. `quality_scale.yaml` marks all Bronze rules done or
-> exempt; `reauthentication-flow` is the first Silver item and the next follow-up.
->
-> **Tests:** config flow at 100 % including every error-to-recovery path and the
-> duplicate-account abort; setup load / auth-failure / retry / unload; sensor snapshots
-> plus stale, null, empty and negative-price cases. Fixtures are **live recordings from
-> the production API, redacted** (account reference, ICP and key label replaced); the
-> four edge-case variants are derived from those recordings rather than written from
-> scratch.
->
-> **Beta:** running in production on real customer accounts since [date] — [N] users, no
-> data-integrity issues reported. [Quote a beta user here, with permission.]
->
-> ## Type of change
->
-> - [x] New integration (thank you!)
->
-> ## Additional information
->
-> - Brands PR: [link]
-> - Documentation PR: [link]
->
-> ## Checklist
->
-> (tick the template's boxes — tests added, docs added, `gen_requirements_all` run,
-> library on PyPI, CLA signed)
+## 3. Open the pull requests
 
-Fill in `[date]`, `[N]` and the beta quote from what the soak actually produced. If the
-tally is small, say the small number — an honest "4 households since 28 August" reads
-better than a vague claim, and reviewers check.
+Open in this order — brands and docs first, so their URLs exist when the core PR body is
+written. Each link opens a pre-filled compare page on the fork:
 
-## 5. While in review
+| # | PR | Compare URL | Title |
+|---|---|---|---|
+| 1 | brands | `https://github.com/home-assistant/brands/compare/master...Daryn-L:brands:add-ecosmart?expand=1` | `Add Ecosmart brand images` |
+| 2 | docs | `https://github.com/home-assistant/home-assistant.io/compare/next...Daryn-L:home-assistant.io:add-ecosmart-docs?expand=1` | `Add Ecosmart integration docs` |
+| 3 | core | `https://github.com/home-assistant/core/compare/dev...Daryn-L:core:ecosmart-integration?expand=1` | `Add Ecosmart integration` |
 
-- **Reply within 24 hours**, every time, even if the reply is "looking at this, will push
-  a fix tomorrow". A stalled conversation moves the PR to the back of the queue, and the
-  queue is measured in months.
-- **Cut, do not argue.** If a reviewer wants something removed, remove it and offer it as
-  a follow-up. Scope arguments are the single biggest cause of a slow first integration.
-  Reviewers close bloated first PRs.
+The docs PR must target **`next`**, not `current` — the compare URL above already does. Docs
+for an unreleased integration go to `next`, which is what becomes the next monthly release.
+
+Once all three are open, go back and edit each body so it links the other two.
+
+### Brands PR body
+
+The brands repo has its own template. Fill it in like this:
+
+- **Proposed change**: `Brand images for the new core integration ecosmart, a New Zealand
+  electricity retailer. Accompanies the core PR <CORE_PR_URL> and the documentation PR
+  <DOCS_PR_URL>.`
+- **Type of change**: tick only **Add a new logo or icon for a new core integration**.
+- **Additional information**: leave `fixes #` empty; put the core PR URL in
+  *Link to code base pull request* and the docs PR URL in *Link to documentation pull request*.
+- **Checklist**: tick PNG, icon 256×256, hDPI icon 512×512, and logo shortest side within
+  128–256 px. **Do not tick the hDPI logo line** — there is no `logo@2x.png`. That is normal:
+  87 existing core integrations ship `logo.png` with no hDPI variant, and the repository's own
+  validator only requires `logo.png` to exist when `logo@2x.png` does, never the other way
+  round.
+
+### Docs PR body
+
+One or two sentences: documentation page for the new `ecosmart` integration, plus the core PR
+link. `ha_release` is set to `"2026.9"`, the same value the two most recently added new
+integrations (`tonewinner`, `flow_it`) carry on `next`. If the core review runs past that
+release, a reviewer or the release manager moves it — say so in the PR body so nobody thinks
+it is a claim about the merge date.
+
+---
+
+## 4. Core PR description — final text, ready to paste
+
+Replace `<BRANDS_PR_URL>`, `<DOCS_PR_URL>` and `<SOAK_EVIDENCE>`. Everything else is final.
+Keep the template's section headings; the HA bot and the reviewers both key off them.
+
+<!-- BEGIN PASTE -->
+
+## Breaking change
+
+<!-- Not a breaking change: delete this section before submitting. -->
+
+## Proposed change
+
+Adds a new integration for **Ecosmart**, a New Zealand electricity retailer that passes the
+half-hourly wholesale (spot) price of electricity through to its customers. The integration
+exposes that price and the published forward curve, so New Zealand users can move consumption
+— hot water, EV charging, home batteries — into the cheap half hours.
+
+It is deliberately a minimum first integration: **one platform (sensor), two entities per
+connection point, no actions, no diagnostics, no options flow.** Follow-ups are planned and
+will each be small.
+
+- **Spot price** — the current wholesale price in c/kWh including GST, polled every 5 minutes.
+  Unavailable when the published price is stale or carries no value: a price more than about
+  fifteen minutes old must never be what tells a battery to charge.
+- **Forecast price** — the forecast for the half hour in progress, polled every 30 minutes,
+  with the whole published curve as an unrecorded attribute.
+
+One service device per ICP (the fifteen-character identifier of a New Zealand electricity
+connection). Two coordinators fetch per distinct grid exit point rather than per ICP, so
+several connections behind the same substation share one request — roughly 14 requests an
+hour per grid exit point against a 60-per-minute key limit.
+
+**Library:** all protocol code lives in
+[`aioecosmart`](https://github.com/ecosmart-nz/aioecosmart)
+([PyPI](https://pypi.org/project/aioecosmart/)) — MIT, 100% test coverage enforced in CI,
+ruff and `mypy --strict` clean, tested on Python 3.13 and 3.14, published to PyPI by GitHub
+Trusted Publishing. This PR pins `aioecosmart==0.1.0`, the library's first release, so there
+is no previous version to diff against.
+
+**Quality scale:** `bronze`. `quality_scale.yaml` marks every Bronze rule done or exempt.
+Silver rules are marked honestly: six are already done, and `reauthentication-flow` is the
+real outstanding one and the next follow-up PR.
+
+**Tests:** config flow at 100% including every error-to-recovery path and the duplicate-account
+abort; setup load / auth-failure / retry / unload; sensor snapshots plus stale, null, empty and
+negative-price cases. Fixtures are live recordings from the production API with the account
+reference, ICP and key label redacted; the edge-case variants are derived from those recordings
+rather than written from scratch.
+
+**Real-world testing:** <SOAK_EVIDENCE>
+
+## Type of change
+
+- [x] New integration (thank you!)
+
+## Additional information
+
+- This PR fixes or closes issue: n/a
+- Brands PR: <BRANDS_PR_URL>
+- Link to documentation pull request: <DOCS_PR_URL>
+- Link to developer documentation pull request: n/a
+- Link to frontend pull request: n/a
+
+## Checklist
+
+- [ ] I understand the code I am submitting and can explain how it works.
+- [x] The code change is tested and works locally.
+- [x] Local tests pass. **Your PR cannot be merged unless tests pass**
+- [x] There is no commented out code in this PR.
+- [x] I have followed the [development checklist][dev-checklist]
+- [x] I have followed the [perfect PR recommendations][perfect-pr]
+- [x] The code has been formatted using Ruff (`ruff format homeassistant tests`)
+- [x] Tests have been added to verify that the new code works.
+- [ ] Any generated code has been carefully reviewed for correctness and compliance with project standards.
+
+If user exposed functionality or configuration variables are added/changed:
+
+- [x] Documentation added/updated for [www.home-assistant.io][docs-repository]
+
+If the code communicates with devices, web services, or third-party tools:
+
+- [x] The [manifest file][manifest-docs] has all fields filled out correctly.
+- [x] New or updated dependencies have been added to `requirements_all.txt`.
+- [x] For the updated dependencies a diff between library versions and ideally a link to the changelog/release notes is added to the PR description.
+
+To help with the load of incoming pull requests:
+
+- [ ] I have reviewed two other [open pull requests][prs] in this repository.
+
+<!-- END PASTE -->
+
+### The three unticked boxes
+
+They are unticked on purpose, and each is a Daryn action, not a code action:
+
+- **"I understand the code I am submitting and can explain how it works"** and **"Any
+  generated code has been carefully reviewed"** — these are the Home Assistant
+  [AI policy](https://developers.home-assistant.io/docs/ai_policy) boxes. The integration was
+  written by an agent under Daryn's direction. Read `homeassistant/components/ecosmart/` end
+  to end (about 450 lines outside tests) before ticking them. Ticking them without reading is
+  the one thing in this whole submission that would be dishonest.
+- **"I have reviewed two other open pull requests"** — actually review two, then tick. The
+  linked query filters to PRs nobody has reviewed yet.
+
+Everything else above is ticked because it is true and was measured: see the gate table in §1.
+
+---
+
+## 5. Sign the CLA
+
+The CLA bot comments on the first pull request with a link; signing is a single click with the
+GitHub account, and it covers every Home Assistant repository afterwards. Sign it as soon as
+the bot asks — an unsigned CLA blocks the merge and nothing else in the review can finish.
+
+---
+
+## 6. While in review
+
+- **Reply within 24 hours**, every time, even if the reply is only "looking at this, will push
+  a fix tomorrow". A stalled conversation moves the PR to the back of a queue measured in
+  months. Agents draft the replies; they go out under Daryn's name.
+- **Cut, do not argue.** If a reviewer wants something removed, remove it and offer it as a
+  follow-up. Scope arguments are the single biggest cause of a slow first integration, and
+  reviewers close bloated first PRs.
 - **Stay rebased** on `dev`. Rebase, do not merge.
-- Agents draft the replies; they go out under Daryn's name.
-- Realistic timeline: weeks at best, months at the tail. Electric Kiwi — the other New
-  Zealand retailer integration — took about eight months. The beta channel in this repo
-  serves customers the whole time, so a slow queue costs marketing timing, not product.
+- Only one new-integration PR per author may be open at a time. Do not queue the follow-ups
+  (windows/TOU sensors, reauth, binary sensors, diagnostics) behind this one.
+- Realistic timeline: weeks at best, months at the tail. Electric Kiwi — the other New Zealand
+  retailer integration — took about eight months. The beta channel in this repository serves
+  customers the whole time, so a slow queue costs marketing timing, not product.
 
-## 6. After it merges
+---
 
-1. Cut a final release of this repo whose README tells beta users to upgrade Home
+## 7. After it merges
+
+1. Cut a final release of this repository whose README tells beta users to upgrade Home
    Assistant and delete `custom_components/ecosmart/`.
-2. Update the website's `/electricity/api/home-assistant/` page to lead with the
-   integration, keeping the YAML template as the power-user fallback.
-3. Start the follow-up series, one small PR at a time: windows/TOU sensors →
-   reauth + reconfigure → cheap/dear window binary sensors → diagnostics → options flow →
-   Silver sweep.
+2. Update the website's `/electricity/api/home-assistant/` page to lead with the integration,
+   keeping the YAML template as the power-user fallback.
+3. Start the follow-up series, one small PR at a time: windows/TOU sensors → reauth and
+   reconfigure → cheap/dear window binary sensors → diagnostics → options flow → Silver sweep.
+
+---
+
+## Appendix: what is in each branch
+
+**brands** — one commit, three files, nothing else:
+
+```
+core_integrations/ecosmart/icon.png       256 x 256
+core_integrations/ecosmart/icon@2x.png    512 x 512
+core_integrations/ecosmart/logo.png       640 x 128   (shortest side 128, inside the 128-256 rule)
+```
+
+**docs** — one commit, one new file, `source/_integrations/ecosmart.markdown`. Written against
+the repository's own `_integration_docs_template.markdown` and its `.claude/skills` writing
+rules, and checked with the repository's own linters (`remark --frail` and `textlint`, both
+clean). Section order matches the current template: prerequisites, config-flow include,
+`configuration_basic`, supported functionality, data updates, known limitations,
+troubleshooting, removal.
+
+**core** — the branch is unchanged from wave 4a. Files under
+`homeassistant/components/ecosmart/` and `tests/components/ecosmart/`, plus the generated
+`CODEOWNERS` and requirements lines.
+
+## Appendix: the codeowner handle
+
+The codeowner is `@Daryn-L`, set 25 August 2026. It appears in three places in the core
+checkout, and `CODEOWNERS` is generated rather than hand-edited — change the manifest, then
+run `python -m script.hassfest` and confirm 0 invalid:
+
+1. `homeassistant/components/ecosmart/manifest.json` — the `codeowners` array
+2. `CODEOWNERS` — the `/homeassistant/components/ecosmart/` line
+3. `CODEOWNERS` — the `/tests/components/ecosmart/` line
+
+It also appears in this repository in `docs/ecosmart.markdown` (`ha_codeowners`), which is
+hand-edited, and in `custom_components/ecosmart/manifest.json`, which is not — re-run
+`scripts/sync-from-core.sh 0.1.0` and it picks the handle up from core.
