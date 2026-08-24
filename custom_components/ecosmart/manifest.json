@@ -2,7 +2,7 @@
   "domain": "ecosmart",
   "name": "Ecosmart",
   "codeowners": [
-    "@REPLACE-ME-HANDLE"
+    "@Daryn-L"
   ],
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/ecosmart",
