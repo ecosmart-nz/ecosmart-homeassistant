@@ -64,6 +64,18 @@ def strip_issue_tracker(root: Path) -> None:
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
+def restore_core_documentation(root: Path) -> None:
+    """Leave documentation on core's home-assistant.io page.
+
+    This is the exact shape hassfest rejected on 25 Aug 2026: a custom component
+    may not claim the core documentation page as its own.
+    """
+    path = root / "custom_components" / "ecosmart" / "manifest.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["documentation"] = "https://www.home-assistant.io/integrations/ecosmart"
+    path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
 def break_json(root: Path) -> None:
     (root / "custom_components" / "ecosmart" / "icons.json").write_text("{ not json", encoding="utf-8")
 
@@ -81,6 +93,11 @@ CASES: list[tuple[str, Callable[[Path], None], str]] = [
     ("stray file added", add_stray_file, "unexpected file notes.txt"),
     ("manifest version removed", strip_version, "missing required key 'version'"),
     ("manifest issue_tracker removed", strip_issue_tracker, "issue_tracker"),
+    (
+        "manifest documentation left on the core page",
+        restore_core_documentation,
+        "a custom component may not claim the core",
+    ),
     ("icons.json corrupted", break_json, "does not parse"),
     ("en.json text drifted from strings.json", desync_translation, "differs from strings.json"),
 ]

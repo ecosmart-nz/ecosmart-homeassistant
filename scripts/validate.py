@@ -5,7 +5,8 @@ Run it after every sync and in CI. It answers four questions:
 
 1. Does every JSON file parse?
 2. Does manifest.json carry what a *custom* component needs -- domain, version,
-   issue_tracker, requirements -- as well as the keys core already requires?
+   issue_tracker, a `documentation` URL pointing at this repo rather than at the
+   core documentation page, requirements -- as well as the keys core requires?
 3. Is translations/en.json there, and does it actually say what strings.json
    says? (Core generates this file and gitignores it; a custom component that
    ships without it shows raw translation keys in the config dialog.)
@@ -59,6 +60,13 @@ REQUIRED_MANIFEST_KEYS = (
     "version",
     "issue_tracker",
 )
+
+#: Where a *custom* component's documentation must point. hassfest refuses a
+#: custom component that claims the core page on home-assistant.io.
+DOCUMENTATION_URL = "https://github.com/ecosmart-nz/ecosmart-homeassistant"
+
+#: The only manifest keys the sync may differ from core on.
+EXPECTED_MANIFEST_DELTAS = frozenset({"version", "issue_tracker", "documentation"})
 
 #: A `[%key:common::config_flow::error::cannot_connect%]` style reference.
 REFERENCE = re.compile(r"^\[%key:[^%]+%\]$")
@@ -115,6 +123,14 @@ def check_manifest(manifest: object) -> None:
             fail(f"manifest.json: version {version!r} is not a release-looking version")
     elif version is not None:
         fail("manifest.json: version must be a string")
+
+    documentation = manifest.get("documentation")
+    if documentation is not None and documentation != DOCUMENTATION_URL:
+        fail(
+            f"manifest.json: documentation is {documentation!r}, expected "
+            f"{DOCUMENTATION_URL!r} -- a custom component may not claim the core "
+            "documentation page, and hassfest refuses one that does"
+        )
 
     tracker = manifest.get("issue_tracker")
     if isinstance(tracker, str):
@@ -191,23 +207,37 @@ def compare_with_core(core: Path) -> None:
 
     for name in sorted(core_files & here):
         if name == "manifest.json":
-            continue  # deliberately differs: version + issue_tracker
+            continue  # deliberately differs: version, issue_tracker, documentation
         if (source / name).read_bytes() != (COMPONENT / name).read_bytes():
             fail(f"core comparison: {name} differs from core")
 
-    # The manifest may differ only by the two added keys.
+    # The manifest may differ from core's on exactly three keys and no others:
+    # the two core forbids, plus documentation, which a custom component must
+    # point at its own repo.
     try:
         core_manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
         here_manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         fail(f"core comparison: cannot read a manifest -- {error}")
         return
-    added = set(here_manifest) - set(core_manifest)
-    if added != {"version", "issue_tracker"}:
-        fail(f"core comparison: manifest adds {sorted(added)}, expected version + issue_tracker")
-    for key, value in core_manifest.items():
-        if here_manifest.get(key) != value:
+
+    sentinel = object()
+    deltas = {
+        key
+        for key in set(core_manifest) | set(here_manifest)
+        if core_manifest.get(key, sentinel) != here_manifest.get(key, sentinel)
+    }
+    if deltas != set(EXPECTED_MANIFEST_DELTAS):
+        for key in sorted(deltas - EXPECTED_MANIFEST_DELTAS):
             fail(f"core comparison: manifest key '{key}' was changed by the sync")
+        for key in sorted(EXPECTED_MANIFEST_DELTAS - deltas):
+            fail(f"core comparison: manifest key '{key}' was NOT changed by the sync")
+
+    if here_manifest.get("documentation") != DOCUMENTATION_URL:
+        fail(
+            f"core comparison: manifest documentation is "
+            f"{here_manifest.get('documentation')!r}, expected {DOCUMENTATION_URL!r}"
+        )
 
 
 def main() -> int:

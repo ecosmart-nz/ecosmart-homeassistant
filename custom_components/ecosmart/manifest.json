@@ -5,7 +5,7 @@
     "@Daryn-L"
   ],
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/ecosmart",
+  "documentation": "https://github.com/ecosmart-nz/ecosmart-homeassistant",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/ecosmart-nz/ecosmart-homeassistant/issues",

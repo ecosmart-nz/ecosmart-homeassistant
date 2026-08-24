@@ -4,8 +4,11 @@
 #
 # The integration is written once, in core. This repo only republishes it in the
 # shape a manually installed custom component needs: the two manifest keys core
-# forbids (`version`, `issue_tracker`) and the translations file core generates
-# but does not commit. Nothing here is ever hand-edited -- edit core, re-run this.
+# forbids (`version`, `issue_tracker`), a `documentation` URL pointing at this
+# repo rather than at home-assistant.io (hassfest refuses a custom component
+# that claims the core documentation page), and the translations file core
+# generates but does not commit. Nothing here is ever hand-edited -- edit core,
+# re-run this.
 #
 # Usage (from anywhere, inside WSL / Linux):
 #     scripts/sync-from-core.sh [version]
@@ -23,6 +26,7 @@ VERSION="${1:-0.1.0}"
 CORE_REPO="${CORE_REPO:-/root/src/ha-core}"
 CORE_BRANCH="${CORE_BRANCH:-ecosmart-integration}"
 ISSUE_TRACKER="${ISSUE_TRACKER:-https://github.com/ecosmart-nz/ecosmart-homeassistant/issues}"
+DOCUMENTATION="${DOCUMENTATION:-https://github.com/ecosmart-nz/ecosmart-homeassistant}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$CORE_REPO/homeassistant/components/ecosmart"
@@ -68,11 +72,11 @@ mkdir -p "$DEST"
     | (cd "$DEST" && tar -xf -)
 
 # --- manifest: add what a custom component requires and core forbids ----------
-python3 - "$DEST/manifest.json" "$VERSION" "$ISSUE_TRACKER" <<'PY'
+python3 - "$DEST/manifest.json" "$VERSION" "$ISSUE_TRACKER" "$DOCUMENTATION" <<'PY'
 import json
 import sys
 
-path, version, issue_tracker = sys.argv[1], sys.argv[2], sys.argv[3]
+path, version, issue_tracker, documentation = sys.argv[1:5]
 with open(path, encoding="utf-8") as handle:
     manifest = json.load(handle)
 
@@ -80,8 +84,15 @@ if "version" in manifest or "issue_tracker" in manifest:
     # Core rejects both keys, so seeing them here means the source is not core.
     raise SystemExit(f"ERROR: {path} already carries version/issue_tracker -- wrong source?")
 
+core_docs = manifest.get("documentation")
+if not isinstance(core_docs, str) or not core_docs.startswith("https://www.home-assistant.io/"):
+    # Same guard: core always points documentation at home-assistant.io.
+    raise SystemExit(f"ERROR: {path} documentation is {core_docs!r} -- wrong source?")
+
 manifest["version"] = version
 manifest["issue_tracker"] = issue_tracker
+# hassfest refuses a custom component whose documentation claims the core page.
+manifest["documentation"] = documentation
 
 # Home Assistant's own ordering: domain and name first, the rest alphabetical.
 lead = ["domain", "name"]
@@ -91,7 +102,7 @@ ordered.update({key: manifest[key] for key in sorted(manifest) if key not in lea
 with open(path, "w", encoding="utf-8", newline="\n") as handle:
     json.dump(ordered, handle, indent=2)
     handle.write("\n")
-print("manifest: version + issue_tracker injected")
+print("manifest: version + issue_tracker injected, documentation repointed at this repo")
 PY
 
 # --- translations: core generates en.json but gitignores it -------------------
