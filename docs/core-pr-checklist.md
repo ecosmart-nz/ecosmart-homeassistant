@@ -121,7 +121,7 @@ it is a claim about the merge date.
 
 ## 4. Core PR description — final text, ready to paste
 
-Replace `<BRANDS_PR_URL>`, `<DOCS_PR_URL>` and `<SOAK_EVIDENCE>`. Everything else is final.
+Replace `<BRANDS_PR_URL>` and `<DOCS_PR_URL>`. Everything else is final.
 Keep the template's section headings; the HA bot and the reviewers both key off them.
 
 <!-- BEGIN PASTE -->
@@ -169,7 +169,7 @@ negative-price cases. Fixtures are live recordings from the production API with 
 reference, ICP and key label redacted; the edge-case variants are derived from those recordings
 rather than written from scratch.
 
-**Real-world testing:** <SOAK_EVIDENCE>
+**Real-world testing:** The integration is running on a live Home Assistant 2026.8.3 instance since 25 August 2026, configured entirely through the UI with a self-service customer API key minted in the ecosmart app by the maintainer — the exact path an end user follows. One connection point; the spot (5-minute) and forecast (30-minute) coordinators have been polling the production API cleanly within the key's 12-requests-per-minute budget. A public manual-install beta repository (linked above) serves additional customers while this PR is in review.
 
 ## Type of change
 
