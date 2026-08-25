@@ -84,9 +84,9 @@ written. Each link opens a pre-filled compare page on the fork:
 
 | # | PR | Compare URL | Title |
 |---|---|---|---|
-| 1 | brands | `https://github.com/home-assistant/brands/compare/master...Daryn-L:brands:add-ecosmart?expand=1` | `Add Ecosmart brand images` |
-| 2 | docs | `https://github.com/home-assistant/home-assistant.io/compare/next...Daryn-L:home-assistant.io:add-ecosmart-docs?expand=1` | `Add Ecosmart integration docs` |
-| 3 | core | `https://github.com/home-assistant/core/compare/dev...Daryn-L:core:ecosmart-integration?expand=1` | `Add Ecosmart integration` |
+| 1 | brands | `https://github.com/home-assistant/brands/compare/master...Daryn-L:brands:add-ecosmart?expand=1` | `Add ecosmart brand images` |
+| 2 | docs | `https://github.com/home-assistant/home-assistant.io/compare/next...Daryn-L:home-assistant.io:add-ecosmart-docs?expand=1` | `Add ecosmart integration docs` |
+| 3 | core | `https://github.com/home-assistant/core/compare/dev...Daryn-L:core:ecosmart-integration?expand=1` | `Add ecosmart integration` |
 
 The docs PR must target **`next`**, not `current` — the compare URL above already does. Docs
 for an unreleased integration go to `next`, which is what becomes the next monthly release.
@@ -132,7 +132,7 @@ Keep the template's section headings; the HA bot and the reviewers both key off 
 
 ## Proposed change
 
-Adds a new integration for **Ecosmart**, a New Zealand electricity retailer that passes the
+Adds a new integration for **ecosmart**, a New Zealand electricity retailer that passes the
 half-hourly wholesale (spot) price of electricity through to its customers. The integration
 exposes that price and the published forward curve, so New Zealand users can move consumption
 — hot water, EV charging, home batteries — into the cheap half hours.

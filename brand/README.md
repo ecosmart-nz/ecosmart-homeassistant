@@ -28,7 +28,7 @@ All three are RGBA with a genuinely transparent background.
 
 ## Why the 2× icon comes from the vector
 
-There is no raster copy of the Ecosmart mark larger than 256 px with a transparent
+There is no raster copy of the ecosmart mark larger than 256 px with a transparent
 background. Nothing in the brand folder or any of the apps supplies one:
 
 - `mark-256.png` — 256 × 256, transparent. The 1× icon, used as-is.

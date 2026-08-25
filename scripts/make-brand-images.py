@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the brand/ PNGs for the home-assistant/brands pull request.
 
-Sources are the Ecosmart website's brand masters plus the vector mark. Nothing
+Sources are the ecosmart website's brand masters plus the vector mark. Nothing
 here upscales: every output is either a master copied verbatim, or a fresh
 render of the vector at the size required.
 

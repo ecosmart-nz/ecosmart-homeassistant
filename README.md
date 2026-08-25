@@ -1,14 +1,14 @@
-# Ecosmart for Home Assistant
+# ecosmart for Home Assistant
 
-Live New Zealand wholesale electricity prices in Home Assistant, for Ecosmart customers.
+Live New Zealand wholesale electricity prices in Home Assistant, for ecosmart customers.
 
-Ecosmart is a New Zealand electricity retailer that passes the half-hourly wholesale
+ecosmart is a New Zealand electricity retailer that passes the half-hourly wholesale
 (spot) price straight through to customers. This integration puts that price, and the
 published forward curve, into Home Assistant as sensors you can automate against — run
 the dishwasher when power is cheap, charge the battery before a price spike, whatever
 your setup can do.
 
-**Ecosmart publishes the price signal; it never controls your inverter, battery or
+**ecosmart publishes the price signal; it never controls your inverter, battery or
 charger.** What you do with the price is entirely yours, and so is the outcome.
 
 > **Beta.** This is the public beta channel while the integration goes through Home
@@ -51,12 +51,12 @@ Prices can be negative. That is real, it happens, and the sensors pass it throug
 
 You need:
 
-- An **Ecosmart electricity account** with at least one connected property. If your
-  switch to Ecosmart has not completed yet, the integration will tell you the key has no
+- An **ecosmart electricity account** with at least one connected property. If your
+  switch to ecosmart has not completed yet, the integration will tell you the key has no
   connection points — try again once the property is live.
-- An **API key**, which you create yourself in the Ecosmart app:
+- An **API key**, which you create yourself in the ecosmart app:
 
-  > Create a key in the Ecosmart app under More > Settings > Advanced > API keys.
+  > Create a key in the ecosmart app under More > Settings > Advanced > API keys.
   > Creating a new key disables the previous one, so if you use your key somewhere else
   > already, that other tool will stop working.
 
@@ -72,7 +72,7 @@ You need:
   will refuse to load the component and say so in the log, rather than misbehave quietly.
   If you hit that, please open an issue with your version — that is useful information.
 
-Nobody at Ecosmart will ever send you a key or ask you for one. You mint it, you hold it.
+Nobody at ecosmart will ever send you a key or ask you for one. You mint it, you hold it.
 
 ## Install
 
@@ -87,7 +87,7 @@ is nothing to add to HACS.
    standard Home Assistant OS install, `<config>` is the folder holding
    `configuration.yaml`.
 3. Restart Home Assistant.
-4. Go to **Settings → Devices & services → Add integration**, search for **Ecosmart**,
+4. Go to **Settings → Devices & services → Add integration**, search for **ecosmart**,
    and paste your API key.
 
 The integration checks the key before it creates anything, so if it accepts the key you
